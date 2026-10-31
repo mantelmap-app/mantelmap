@@ -1,0 +1,885 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Geldlek</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Gratis app die toont welke tegemoetkomingen je laat liggen, je herinnert aan deadlines en contracten, en kant-en-klare brieven geeft. Alles blijft op je eigen toestel.">
+<meta name="theme-color" content="#0b6e5b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Geldlek">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: app shell. Top tabs on wide screens, bottom tab bar on phones. The "bon" (receipt) is the signature element. */
+:root{
+  --bg:#eef3f2; --paper:#ffffff; --ink:#13201e; --muted:#566663; --line:#cfdad7;
+  --accent:#0b6e5b; --accent-ink:#ffffff; --accent-soft:#d9ece7; --leak:#b4430f; --leak-bg:#fbe9df;
+  --ok:#1d6b3a; --ok-bg:#e1f2e6; --maybe:#7a5a00; --maybe-bg:#fbf1d2; --later-bg:#e6eef6; --later:#2b5378;
+  --focus:#0b6e5b;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --tabbar:64px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1716; --paper:#172221; --ink:#e4eeeb; --muted:#9db0ac; --line:#2c3b39;
+  --accent:#4fc7a8; --accent-ink:#06211b; --accent-soft:#18342d; --leak:#f08a55; --leak-bg:#3a2014;
+  --ok:#7fd69b; --ok-bg:#16301f; --maybe:#e8c560; --maybe-bg:#33290c; --later-bg:#162636; --later:#9cc3e6;
+  --focus:#4fc7a8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1716; --paper:#172221; --ink:#e4eeeb; --muted:#9db0ac; --line:#2c3b39;
+  --accent:#4fc7a8; --accent-ink:#06211b; --accent-soft:#18342d; --leak:#f08a55; --leak-bg:#3a2014;
+  --ok:#7fd69b; --ok-bg:#16301f; --maybe:#e8c560; --maybe-bg:#33290c; --later-bg:#162636; --later:#9cc3e6;
+  --focus:#4fc7a8; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 48px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+
+/* Header + tabs */
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px}
+.brand{font-family:var(--f-display);font-weight:800;font-size:2rem;line-height:1;letter-spacing:-.02em;margin:0;text-decoration:none;color:var(--ink)}
+.brand span{color:var(--leak)}
+.tabs{display:flex;gap:4px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:4px}
+.tab{display:flex;align-items:center;gap:8px;font-weight:700;text-decoration:none;color:var(--muted);padding:8px 14px;border-radius:9px;position:relative;min-height:44px}
+.tab[aria-current="page"]{background:var(--accent-soft);color:var(--ink)}
+.tab svg{flex:none}
+.badge{min-width:20px;height:20px;border-radius:10px;background:var(--leak);color:#fff;font-size:.75rem;display:inline-grid;place-items:center;padding:0 6px;font-family:var(--f-mono)}
+.badge[hidden]{display:none}
+@media (max-width:720px){
+  body{padding-bottom:calc(var(--tabbar) + 32px + env(safe-area-inset-bottom,0px))}
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;border-radius:0;border-width:1px 0 0;justify-content:space-around;
+    padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+  .tab{flex-direction:column;gap:2px;font-size:.75rem;padding:6px 4px;flex:1;text-align:center}
+  .tab .badge{position:absolute;top:2px;right:calc(50% - 26px)}
+}
+.privacy{display:flex;gap:10px;align-items:flex-start;font-size:.92rem;color:var(--muted);margin:0}
+.privacy svg{flex:none;margin-top:3px}
+.alert{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;background:var(--leak-bg);border-radius:10px;padding:12px 16px}
+.alert[hidden]{display:none}
+
+h2.view-title{font-family:var(--f-display);font-weight:800;font-size:clamp(1.6rem,4vw,2.1rem);margin:0;text-wrap:balance;line-height:1.1}
+.view-intro{margin:6px 0 0;max-width:65ch;color:var(--muted)}
+.view{display:flex;flex-direction:column;gap:20px}
+.view[hidden]{display:none}
+h3.sec{font-family:var(--f-display);font-weight:800;font-size:1.35rem;margin:8px 0 0}
+
+/* Forms */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,400px);gap:24px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}}
+form{display:flex;flex-direction:column;gap:18px;min-width:0}
+.sample{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;background:var(--maybe-bg);border-radius:10px;padding:12px 16px;font-size:.95rem}
+.sample[hidden]{display:none}
+fieldset{border:1px solid var(--line);background:var(--paper);border-radius:12px;margin:0;padding:18px 18px 20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+legend{font-family:var(--f-display);font-weight:600;font-size:1.15rem;padding:0 6px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+label.f{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:.98rem;min-width:0}
+.hint{font-weight:400;color:var(--muted);font-size:.88rem}
+input[type=number],input[type=date],input[type=text],select,textarea{font:inherit;font-size:1rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;min-height:46px}
+textarea{min-height:120px;resize:vertical}
+.euro{position:relative;display:block}
+.euro input{padding-left:30px}
+.euro::before{content:"€";position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}
+.check{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-size:.98rem}
+.check input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--accent);flex:none}
+.sub{display:flex;flex-direction:column;gap:14px;padding-left:12px;border-left:3px solid var(--line)}
+.sub[hidden]{display:none}
+
+/* Buttons */
+button,.btn{font:inherit;font-weight:700;border-radius:8px;padding:10px 16px;min-height:44px;cursor:pointer;border:1px solid transparent;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn-small{min-height:36px;padding:6px 12px;font-size:.9rem}
+.btn-danger{background:transparent;color:var(--leak);border-color:var(--leak)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+
+/* Bon */
+.bon{position:sticky;top:16px;background:var(--paper);border:1px solid var(--line);border-radius:4px;min-width:0}
+@media (max-width:880px){.bon{position:static}}
+.bon-head{padding:20px 20px 16px;border-bottom:2px dashed var(--line);display:flex;flex-direction:column;gap:6px}
+.kicker{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.total{font-family:var(--f-display);font-weight:800;font-size:clamp(2.4rem,7vw,3.1rem);line-height:1;color:var(--leak);font-variant-numeric:tabular-nums}
+.total small{font-size:.4em;font-weight:600;color:var(--muted)}
+.note{font-size:.88rem;color:var(--muted);margin:0}
+.lines{list-style:none;margin:0;padding:12px 20px;font-family:var(--f-mono);font-size:.9rem;display:flex;flex-direction:column;gap:6px}
+.lines li{display:flex;justify-content:space-between;gap:12px}
+.lines li span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}
+.lines .empty{color:var(--muted);font-family:var(--f-body)}
+.bon-foot{padding:14px 20px 20px;border-top:2px dashed var(--line);display:flex;flex-direction:column;gap:10px}
+.copied{font-size:.88rem;color:var(--ok);min-height:1.2em;margin:0}
+.share-text{min-height:80px;font-size:.9rem}
+.share-text[hidden]{display:none}
+
+/* Progress strip (Mijn geld) */
+.strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.strip div{padding:14px 16px;display:flex;flex-direction:column;gap:2px;border-right:1px solid var(--line);min-width:0}
+.strip div:last-child{border-right:0}
+.strip b{font-family:var(--f-display);font-size:clamp(1.3rem,4vw,1.8rem);font-variant-numeric:tabular-nums;line-height:1.1}
+.strip span{font-size:.85rem;color:var(--muted)}
+.strip .found b{color:var(--leak)} .strip .busy b{color:var(--maybe)} .strip .won b{color:var(--ok)}
+.bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;display:flex}
+.bar i{display:block;height:100%}
+
+/* Cards */
+.list{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card.done{opacity:.8}
+.card-top{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;justify-content:space-between}
+.card h4{font-family:var(--f-display);font-weight:600;font-size:1.2rem;margin:0}
+.amt{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums;color:var(--leak);white-space:nowrap}
+.chip{display:inline-block;font-size:.8rem;font-weight:700;padding:3px 10px;border-radius:99px;letter-spacing:.02em}
+.s-ja{background:var(--ok-bg);color:var(--ok)} .s-mogelijk{background:var(--maybe-bg);color:var(--maybe)}
+.s-al,.s-later{background:var(--later-bg);color:var(--later)} .s-check{background:var(--leak-bg);color:var(--leak)}
+.why{margin:0}
+.steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px}
+.src{font-size:.85rem;color:var(--muted);margin:0}
+.track{display:flex;flex-wrap:wrap;gap:10px;align-items:end;padding-top:10px;border-top:1px solid var(--line)}
+.track label.f{flex:1 1 180px}
+.muted{color:var(--muted)}
+details.na{font-size:.95rem;color:var(--muted)}
+details.na summary{cursor:pointer;font-weight:700;color:var(--ink)}
+details.na ul{margin:8px 0 0;padding-left:1.2em}
+
+/* Kalender */
+.cal{display:flex;flex-direction:column;gap:0;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.ev{display:grid;grid-template-columns:76px minmax(0,1fr);gap:14px;padding:14px 16px;border-top:1px solid var(--line)}
+.ev:first-child{border-top:0}
+.date{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;background:var(--bg);padding:8px 4px;height:fit-content;font-variant-numeric:tabular-nums}
+.date b{font-family:var(--f-display);font-size:1.6rem;line-height:1}
+.date span{font-family:var(--f-mono);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.ev.urgent .date{background:var(--leak-bg)} .ev.urgent .date b{color:var(--leak)}
+.ev.past{opacity:.6}
+.ev-body{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ev-body h4{margin:0;font-size:1.05rem}
+.ev-body p{margin:0}
+.count{font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
+.ev.urgent .count{color:var(--leak);font-weight:600}
+.empty-state{padding:24px;text-align:left;color:var(--muted)}
+
+/* Brieven */
+.letter{white-space:pre-wrap;font-family:var(--f-body);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:14px;margin:0;font-size:.95rem;max-height:340px;overflow:auto}
+
+.fine{font-size:.88rem;color:var(--muted);max-width:75ch;margin:0}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--leak-bg);padding:10px 12px;border-radius:8px}
+.confirm[hidden]{display:none}
+@media (prefers-reduced-motion:no-preference){.card,.ev{animation:in .22s ease-out both}@keyframes in{from{transform:translateY(4px)}to{transform:none}}}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <a class="brand" href="#scan">Geld<span>lek</span></a>
+    <nav class="tabs" aria-label="Onderdelen">
+      <a class="tab" href="#scan" data-v="scan"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Scan</a>
+      <a class="tab" href="#mijn" data-v="mijn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><ellipse cx="12" cy="7" rx="7" ry="3" stroke="currentColor" stroke-width="2"/><path d="M5 7v5c0 1.7 3.1 3 7 3s7-1.3 7-3V7M5 12v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" stroke="currentColor" stroke-width="2"/></svg>Mijn geld</a>
+      <a class="tab" href="#kalender" data-v="kalender"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Kalender<span class="badge" id="badge" hidden>0</span></a>
+      <a class="tab" href="#brieven" data-v="brieven"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3.5 7l8.5 6 8.5-6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>Brieven</a>
+    </nav>
+  </div>
+
+  <div class="alert" id="alert" hidden>
+    <span id="alert-text"></span>
+    <a class="btn btn-ghost btn-small" href="#kalender">Bekijk kalender</a>
+  </div>
+
+  <!-- ================= SCAN ================= -->
+  <section class="view" id="v-scan" aria-labelledby="t-scan">
+    <div>
+      <h2 class="view-title" id="t-scan">Welk geld laat je liggen?</h2>
+      <p class="view-intro">Beantwoord een paar vragen. Je ziet meteen welke tegemoetkomingen je mogelijk niet krijgt en welke contracten te duur kunnen zijn.</p>
+    </div>
+    <p class="privacy"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2" fill="currentColor" opacity=".25"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+      <span>Je antwoorden blijven op dit toestel. Er is geen account en niets wordt naar ons gestuurd.</span></p>
+    <div class="grid">
+      <form id="scan" novalidate>
+        <div class="sample" id="sample">
+          <span><strong>Voorbeeld:</strong> dit is een verzonnen gezin. Vervang de antwoorden door die van jou.</span>
+          <button type="button" class="btn-ghost btn-small" id="clear">Leegmaken</button>
+        </div>
+        <fieldset>
+          <legend>Je gezin</legend>
+          <div class="row">
+            <label class="f" for="gewest">Waar woon je?
+              <select id="gewest"><option value="vl">Vlaanderen</option><option value="br">Brussel</option><option value="wa">Wallonië</option></select>
+            </label>
+            <label class="f" for="volw">Volwassenen in huis<input type="number" id="volw" min="1" max="8" inputmode="numeric"></label>
+            <label class="f" for="last">Personen ten laste <span class="hint">Meestal je kinderen</span><input type="number" id="last" min="0" max="10" inputmode="numeric"></label>
+          </div>
+          <label class="check" for="oud"><input type="checkbox" id="oud"> Iemand in het gezin is 66 jaar of ouder</label>
+          <label class="f" for="inkomen">Bruto belastbaar gezinsinkomen per jaar
+            <span class="hint">Staat op je aanslagbiljet. Een schatting is goed genoeg. Pensioen en uitkeringen tellen mee.</span>
+            <span class="euro"><input type="number" id="inkomen" min="0" step="100" inputmode="numeric"></span>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Wat krijg je al?</legend>
+          <span class="hint" style="margin-top:-6px">Vink aan wat voor iemand in je gezin geldt.</span>
+          <div class="checks">
+            <label class="check" for="u_leefloon"><input type="checkbox" id="u_leefloon"> Leefloon of steun van het OCMW</label>
+            <label class="check" for="u_igo"><input type="checkbox" id="u_igo"> Inkomensgarantie voor ouderen (IGO)</label>
+            <label class="check" for="u_handicap"><input type="checkbox" id="u_handicap"> Tegemoetkoming voor personen met een handicap</label>
+            <label class="check" for="u_zorgbudget"><input type="checkbox" id="u_zorgbudget"> Zorgbudget voor ouderen met een zorgnood</label>
+            <label class="check" for="u_werkloos"><input type="checkbox" id="u_werkloos"> Al 3 maanden of langer werkloos of ziek</label>
+            <label class="check" for="u_eenouder"><input type="checkbox" id="u_eenouder"> Alleenstaande ouder</label>
+          </div>
+          <label class="f" for="vt">Heb je al de verhoogde tegemoetkoming bij je ziekenfonds?
+            <span class="hint">Je ziet het op je klevertje: de code eindigt op 1 (bv. 121/121).</span>
+            <select id="vt"><option value="nee">Nee</option><option value="ja">Ja</option><option value="wn">Weet ik niet</option></select>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Je woning</legend>
+          <label class="f" for="wonen">Je woont in een
+            <select id="wonen"><option value="prive">huurwoning van een private verhuurder</option><option value="sociaal">sociale huurwoning</option><option value="eigen">eigen woning</option></select>
+          </label>
+          <div class="sub" id="sub_prive"><div class="row">
+            <label class="f" for="huur">Huurprijs per maand<span class="euro"><input type="number" id="huur" min="0" inputmode="numeric"></span></label>
+            <label class="f" for="wachtlijst">Ingeschreven voor een sociale woning?
+              <select id="wachtlijst"><option value="nee">Nee</option><option value="kort">Ja, korter dan 4 jaar</option><option value="lang">Ja, 4 jaar of langer</option></select>
+            </label>
+          </div></div>
+          <div class="sub" id="sub_sociaal" hidden>
+            <label class="check" for="collectief"><input type="checkbox" id="collectief"> Mijn appartement heeft een gemeenschappelijke gasverwarming</label>
+          </div>
+          <label class="f" for="verwarming">Hoe verwarm je?
+            <select id="verwarming"><option value="gas">Aardgas</option><option value="elek">Elektriciteit of warmtepomp</option><option value="stookolie">Stookolie (mazout)</option><option value="propaan">Propaan in een tank</option><option value="petroleum">Petroleum, gekocht aan de pomp</option><option value="anders">Iets anders</option></select>
+          </label>
+          <div class="sub" id="sub_liters" hidden>
+            <label class="f" for="liters">Hoeveel liter koop je per jaar?<input type="number" id="liters" min="0" step="50" inputmode="numeric"></label>
+          </div>
+          <div class="row">
+            <label class="f" for="elek">Voorschot elektriciteit per maand<span class="euro"><input type="number" id="elek" min="0" inputmode="numeric"></span></label>
+            <label class="f" for="gasv">Voorschot aardgas per maand<span class="euro"><input type="number" id="gasv" min="0" inputmode="numeric"></span></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Internet en tv</legend>
+          <div class="row">
+            <label class="f" for="net">Wat heb je thuis?
+              <select id="net"><option value="geen">Geen internet thuis</option><option value="internet">Alleen internet</option><option value="bundel">Internet met tv, vaste lijn of gsm</option></select>
+            </label>
+            <label class="f" for="netprijs">Wat betaal je per maand?<span class="euro"><input type="number" id="netprijs" min="0" inputmode="numeric"></span></label>
+            <label class="f" for="vergeleken">Laatst vergeleken
+              <select id="vergeleken"><option value="recent">Minder dan een jaar geleden</option><option value="oud">Langer dan een jaar geleden</option><option value="nooit">Nog nooit</option></select>
+            </label>
+          </div>
+        </fieldset>
+      </form>
+
+      <aside class="bon" aria-labelledby="bon-k">
+        <div class="bon-head">
+          <span class="kicker" id="bon-k">Jouw geldlek · per jaar</span>
+          <div class="total" id="total">€0</div>
+          <p class="note">Geschatte waarde van rechten die je waarschijnlijk of mogelijk niet gebruikt.</p>
+        </div>
+        <ul class="lines" id="lines"></ul>
+        <div class="bon-foot">
+          <a class="btn btn-primary" href="#mijn">Bekijk wat je moet doen</a>
+          <button type="button" class="btn-ghost" id="share">Kopieer om te delen</button>
+          <textarea class="share-text" id="share-text" readonly hidden aria-label="Tekst om te delen"></textarea>
+          <p class="copied" id="copied" aria-live="polite"></p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= MIJN GELD ================= -->
+  <section class="view" id="v-mijn" aria-labelledby="t-mijn" hidden>
+    <div>
+      <h2 class="view-title" id="t-mijn">Mijn geld</h2>
+      <p class="view-intro">Volg op wat je aanvraagt. Duid aan wanneer je iets aangevraagd of ontvangen hebt, en zie hoeveel je al teruggewonnen hebt.</p>
+    </div>
+    <div class="sample" id="sample2"><span><strong>Voorbeeld:</strong> dit zijn de resultaten van het verzonnen gezin. Vul de scan in voor je eigen resultaten.</span><a class="btn btn-ghost btn-small" href="#scan">Naar de scan</a></div>
+    <div class="strip" aria-label="Overzicht">
+      <div class="found"><span>Gevonden</span><b id="s-found">€0</b><span>per jaar</span></div>
+      <div class="busy"><span>Aangevraagd</span><b id="s-busy">€0</b><span>per jaar</span></div>
+      <div class="won"><span>Teruggewonnen</span><b id="s-won">€0</b><span>per jaar</span></div>
+    </div>
+    <div class="bar" aria-hidden="true"><i id="bar-won" style="background:var(--ok)"></i><i id="bar-busy" style="background:var(--maybe)"></i></div>
+    <h3 class="sec">Rechten</h3>
+    <div class="list" id="rechten" aria-live="polite"></div>
+    <h3 class="sec">Contracten</h3>
+    <div class="list" id="contracten"></div>
+    <details class="na" id="na"><summary>Niet van toepassing in jouw situatie</summary><ul id="na-list"></ul></details>
+    <p class="fine">Geldlek geeft een indicatie, geen beslissing. De officiële instantie beslist altijd, en sommige regels hangen af van details die de scan niet vraagt, zoals spaargeld of eigendom. Bedragen en voorwaarden nagekeken in oktober 2026 bij de officiële bronnen die bij elk recht staan.</p>
+  </section>
+
+  <!-- ================= KALENDER ================= -->
+  <section class="view" id="v-kalender" aria-labelledby="t-kal" hidden>
+    <div>
+      <h2 class="view-title" id="t-kal">Geldkalender</h2>
+      <p class="view-intro">Veel geld gaat verloren door een gemiste termijn. Vul een datum in en Geldlek berekent de deadline. Zet ze in je eigen agenda, dan krijg je vanzelf een melding.</p>
+    </div>
+    <form id="evform" class="card" novalidate>
+      <h4>Datum toevoegen</h4>
+      <div class="row">
+        <label class="f" for="ev-type">Wat?
+          <select id="ev-type"></select>
+        </label>
+        <label class="f" for="ev-datum"><span id="ev-datum-label">Datum</span><input type="date" id="ev-datum" required></label>
+      </div>
+      <label class="f" for="ev-titel" id="ev-titel-wrap" hidden>Omschrijving<input type="text" id="ev-titel" maxlength="80"></label>
+      <p class="note" id="ev-uitleg"></p>
+      <div class="actions"><button type="submit" class="btn-primary">Toevoegen</button></div>
+      <p class="copied" id="ev-msg" aria-live="polite"></p>
+    </form>
+    <h3 class="sec">Komende data</h3>
+    <div class="cal" id="cal"></div>
+    <p class="fine">Meldingen komen van je eigen agenda (Google, Outlook of je telefoon). Zo hoeft Geldlek geen gegevens op een server te bewaren. Met "Agenda (.ics)" werkt het met elke agenda-app zodra Geldlek op je toestel geïnstalleerd is.</p>
+  </section>
+
+  <!-- ================= BRIEVEN ================= -->
+  <section class="view" id="v-brieven" aria-labelledby="t-brief" hidden>
+    <div>
+      <h2 class="view-title" id="t-brief">Brieven</h2>
+      <p class="view-intro">Kant-en-klare berichten om iets aan te vragen. Vul je gegevens in, kopieer de tekst en plak hem in een mail of een contactformulier.</p>
+    </div>
+    <fieldset>
+      <legend>Je gegevens <span class="hint">(blijven op dit toestel)</span></legend>
+      <div class="row">
+        <label class="f" for="b-naam">Naam<input type="text" id="b-naam" autocomplete="name"></label>
+        <label class="f" for="b-adres">Adres<input type="text" id="b-adres" autocomplete="street-address"></label>
+        <label class="f" for="b-nummer">Klant- of rijksregisternummer <span class="hint">Optioneel. Wordt alleen in de brief gezet.</span><input type="text" id="b-nummer"></label>
+      </div>
+    </fieldset>
+    <div class="list" id="brieven"></div>
+  </section>
+
+  <!-- ================= OVER / BACK-UP ================= -->
+  <details class="na" id="over">
+    <summary>Privacy, back-up en installeren</summary>
+    <div class="list" style="margin-top:12px">
+      <div class="card">
+        <h4>Waar staan mijn gegevens?</h4>
+        <p class="why">Alleen in de browser van dit toestel. Geldlek heeft geen server, geen account en geen database. Wis je je browsergegevens of gebruik je een ander toestel, dan begin je opnieuw. Maak dus af en toe een back-up.</p>
+        <div class="actions">
+          <button type="button" class="btn-ghost btn-small" id="bk-copy">Back-up kopiëren</button>
+          <button type="button" class="btn-ghost btn-small" id="bk-restore-open">Back-up terugzetten</button>
+          <button type="button" class="btn-danger btn-small" id="wipe-open">Alles wissen</button>
+        </div>
+        <textarea id="bk-text" hidden aria-label="Back-up"></textarea>
+        <div class="actions" id="bk-restore-actions" hidden><button type="button" class="btn-primary btn-small" id="bk-restore">Terugzetten</button></div>
+        <div class="confirm" id="wipe-confirm" hidden><span>Alles op dit toestel wissen? Dit kan niet ongedaan gemaakt worden.</span><button type="button" class="btn-danger btn-small" id="wipe">Ja, wis alles</button><button type="button" class="btn-ghost btn-small" id="wipe-cancel">Annuleren</button></div>
+        <p class="copied" id="bk-msg" aria-live="polite"></p>
+      </div>
+      <div class="card">
+        <h4>Geldlek op je startscherm</h4>
+        <p class="why" id="install-text">Op Android: open het menu van je browser en kies "App installeren". Op iPhone: tik in Safari op Delen en kies "Zet op beginscherm". Daarna werkt Geldlek ook zonder internet.</p>
+        <div class="actions"><button type="button" class="btn-primary btn-small" id="install" hidden>Installeer Geldlek</button></div>
+      </div>
+    </div>
+  </details>
+</div>
+
+<script>
+/* ===================== Regels (nagekeken oktober 2026) ===================== */
+const R = {
+  vt:{gewoon:28054.93,gewoonPer:5193.74,bijzonder:29236.66,bijzonderPer:5412.51,
+    bron:"https://www.inami.fgov.be/nl/thema-s/verzorging-kosten-en-terugbetaling/financiele-toegankelijkheid/verhoogde-tegemoetkoming-grensbedragen-van-de-inkomsten",bronNaam:"RIZIV"},
+  sociaalTarief:{kortingElek:0.24,kortingGas:0.39,check:"https://digital.belgium.be/iaf/hil/economie/soctar/?lng=nl",
+    bron:"https://www.vlaanderen.be/sociaal-tarief-voor-energie-elektriciteit-aardgas-warmte",bronNaam:"Vlaanderen.be"},
+  verwarming:{grens:25311.05,grensPer:4683.69,centMin:0.14,centMax:0.20,maxLiter:1500,pomp:210,termijn:60,
+    bron:"https://www.vlaanderen.be/verwarmingstoelage-via-het-sociaal-verwarmingsfonds",bronNaam:"Vlaanderen.be"},
+  huurpremie:{grensAlleen:31361,grensAlleenHandicap:33988,grensGezin:47039,grensPer:2629,huurGrens:762.28,
+    bedrag:[188.10,219.45,250.80,282.15,313.50],
+    bron:"https://www.vlaanderen.be/bouwen-wonen-en-energie/huren-en-verhuren/vlaamse-huurpremie-voor-kandidaat-huurders-van-een-sociale-woning/hoeveel-bedraagt-de-vlaamse-huurpremie",bronNaam:"Vlaanderen.be"},
+  igo:{basis:1074.64,verhoogd:1611.96,bron:"https://www.vlaanderen.be/inkomensgarantie-voor-ouderen",bronNaam:"Vlaanderen.be"},
+  internet:{alleen:19,bundel:40,bron:"https://www.socialsecurity.be/citizen/nl/sociale-bijstand-en-ocmw/hulp-bij-telecomkosten",bronNaam:"Sociale Zekerheid"},
+  bipt:{alleen:[552,636],bundel:[204,396],
+    bron:"https://www.bipt.be/file/cc73d96153bbd5448a56f19d925d05b1379c7f21/527ee4095db363ad2db8ec340f32ee34e5824637/pb-nationale-vergelijking-2026-08-12.pdf",bronNaam:"BIPT"}
+};
+
+const SAMPLE = {gewest:"vl",volw:1,last:2,oud:false,inkomen:24500,u_leefloon:false,u_igo:false,u_handicap:false,u_zorgbudget:false,u_werkloos:false,u_eenouder:true,
+  vt:"nee",wonen:"prive",huur:720,wachtlijst:"lang",collectief:false,verwarming:"stookolie",liters:1200,elek:85,gasv:0,net:"bundel",netprijs:89,vergeleken:"nooit"};
+const EMPTY = {gewest:"vl",volw:1,last:0,oud:false,inkomen:"",u_leefloon:false,u_igo:false,u_handicap:false,u_zorgbudget:false,u_werkloos:false,u_eenouder:false,
+  vt:"nee",wonen:"prive",huur:"",wachtlijst:"nee",collectief:false,verwarming:"gas",liters:"",elek:"",gasv:"",net:"internet",netprijs:"",vergeleken:"recent"};
+
+/* ===================== Opslag op het toestel ===================== */
+const KEY = "geldlek.v1";
+let S = {answers:null, track:{}, events:[], me:{naam:"",adres:"",nummer:""}};
+function loadState(){ try{ const raw = localStorage.getItem(KEY); if(raw){ const s = JSON.parse(raw); S = Object.assign(S, s); } }catch(e){} }
+function saveState(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+/* ===================== Hulpfuncties ===================== */
+const $ = id => document.getElementById(id);
+const eur = n => "€" + Math.round(n).toLocaleString("nl-BE");
+const eur2 = n => "€" + n.toLocaleString("nl-BE",{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const MAAND = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
+function iso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function parse(s){ const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); }
+function today(){ const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); }
+function addDays(s,n){ const d = parse(s); d.setDate(d.getDate()+n); return iso(d); }
+function addMonths(s,n){ const d = parse(s); const day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth()+n); d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth()+1, 0).getDate())); return iso(d); }
+function nextAnniversary(s){ let y = 1; let n = addMonths(s, 12); while (parse(n) < today()) { y++; n = addMonths(s, 12*y); } return n; }
+function daysUntil(s){ return Math.round((parse(s) - today())/86400000); }
+function longDate(s){ return parse(s).toLocaleDateString("nl-BE",{weekday:"long",day:"numeric",month:"long",year:"numeric"}); }
+function uid(){ return Math.random().toString(36).slice(2,10); }
+
+/* ===================== Scan ===================== */
+const num = id => { const v = parseFloat($(id).value); return isFinite(v) && v >= 0 ? v : 0; };
+function fill(p){ for (const [k,v] of Object.entries(p)){ const el = $(k); if (!el) continue; if (el.type === "checkbox") el.checked = !!v; else el.value = v; } }
+function readForm(){
+  const p = {};
+  ["gewest","vt","wonen","wachtlijst","verwarming","net","vergeleken"].forEach(k => p[k] = $(k).value);
+  ["oud","u_leefloon","u_igo","u_handicap","u_zorgbudget","u_werkloos","u_eenouder","collectief"].forEach(k => p[k] = $(k).checked);
+  p.volw = $("volw").value; p.last = $("last").value;
+  ["inkomen","huur","liters","elek","gasv","netprijs"].forEach(k => p[k] = $(k).value);
+  return p;
+}
+function normalize(raw){
+  const p = Object.assign({}, raw);
+  const n = v => { const x = parseFloat(v); return isFinite(x) && x >= 0 ? x : 0; };
+  p.volw = Math.max(1, Math.round(n(raw.volw)) || 1);
+  p.last = Math.round(n(raw.last));
+  p.inkomenGekend = String(raw.inkomen).trim() !== "";
+  ["inkomen","huur","liters","elek","gasv","netprijs"].forEach(k => p[k] = n(raw[k]));
+  return p;
+}
+
+function evaluate(p){
+  const leden = p.volw + p.last;
+  const autoVT = p.u_leefloon || p.u_igo || p.u_handicap || p.u_zorgbudget;
+  const bijzonder = p.oud || p.u_eenouder || p.u_werkloos || p.u_handicap;
+  const vtGrens = bijzonder ? R.vt.bijzonder + R.vt.bijzonderPer*(leden-1) : R.vt.gewoon + R.vt.gewoonPer*(leden-1);
+  const vtInkomen = p.inkomenGekend && p.inkomen <= vtGrens;
+  const heeftVT = p.vt === "ja" || autoVT || vtInkomen;
+  const out = [], na = [], contracts = [];
+
+  if (p.vt === "ja") out.push({id:"vt",titel:"Verhoogde tegemoetkoming",status:"al",bedrag:0,
+    waarom:"Je hebt ze al. Ze maakt dokter, apotheek en ziekenhuis goedkoper en opent de deur naar andere voordelen, zoals de verwarmingstoelage.",stappen:[],bron:R.vt});
+  else if (autoVT) out.push({id:"vt",titel:"Verhoogde tegemoetkoming",status:"ja",bedrag:0,brief:"vt",
+    waarom:"Met je huidige uitkering krijg je ze normaal automatisch. Ze maakt dokter, apotheek en ziekenhuis goedkoper.",
+    stappen:["Kijk op je klevertje van het ziekenfonds of de code op 1 eindigt.","Staat het er niet op? Vraag je ziekenfonds waarom."],bron:R.vt});
+  else if (vtInkomen) out.push({id:"vt",titel:"Verhoogde tegemoetkoming",status:"mogelijk",bedrag:0,brief:"vt",
+    waarom:`Je gezinsinkomen ligt onder de grens van ${eur(vtGrens)} voor een gezin van ${leden}. Ze maakt dokter, apotheek en ziekenhuis goedkoper, en geeft toegang tot de verwarmingstoelage.`,
+    stappen:["Vraag de verhoogde tegemoetkoming aan bij je ziekenfonds. Gebruik de brief bij Brieven.","Houd je laatste aanslagbiljet bij de hand.","Je vult een verklaring over je gezinsinkomen in. Het ziekenfonds kijkt dat na."],bron:R.vt});
+  else na.push(p.inkomenGekend ? `Verhoogde tegemoetkoming: je inkomen ligt boven ${eur(vtGrens)}.` : "Verhoogde tegemoetkoming: vul je inkomen in om dit te checken.");
+
+  const st = R.sociaalTarief;
+  const stBesparing = p.elek*12*st.kortingElek + p.gasv*12*st.kortingGas;
+  if (autoVT) out.push({id:"st",titel:"Sociaal tarief voor energie",status:"ja",bedrag:stBesparing,
+    waarom:`Met je uitkering heb je er automatisch recht op. Het sociaal tarief is ongeveer ${Math.round(st.kortingElek*100)}% goedkoper voor elektriciteit en ${Math.round(st.kortingGas*100)}% voor gas dan een gemiddeld contract.` + (stBesparing ? " Het bedrag is wat je bespaart als het nog niet toegepast wordt." : " Vul je voorschotten in om de besparing te zien."),
+    stappen:["Check bij de FOD Economie of het sociaal tarief al op je contract staat.","Staat het er niet op? Vraag een attest bij de instantie die je uitkering betaalt en geef het aan je energieleverancier."],
+    link:{href:st.check,tekst:"Check je sociaal tarief (FOD Economie)"},bron:st});
+  else if (p.wonen === "sociaal" && p.collectief) out.push({id:"st",titel:"Sociaal tarief voor energie",status:"mogelijk",bedrag:0,brief:"st",
+    waarom:"Huurders van een sociaal appartement met gemeenschappelijke gasverwarming hebben recht op het sociaal tarief. Dat gaat niet automatisch: je verhuurder moet het aanvragen en de korting doorgeven.",
+    stappen:["Vraag je woonmaatschappij of ze het sociaal tarief aangevraagd hebben. Gebruik de brief bij Brieven.","Vraag of de korting in je huurlasten verrekend wordt."],bron:st});
+  else na.push("Sociaal tarief voor energie: alleen bij bepaalde uitkeringen. De verhoogde tegemoetkoming alleen geeft er geen recht op.");
+
+  const vw = R.verwarming;
+  const brandstof = ["stookolie","propaan","petroleum"].includes(p.verwarming);
+  const vwGrens = vw.grens + vw.grensPer*p.last;
+  const vwInkomen = p.inkomenGekend && p.inkomen <= vwGrens;
+  if (brandstof && (heeftVT || vwInkomen)){
+    let bedrag, uitleg;
+    if (p.verwarming === "petroleum"){ bedrag = vw.pomp; uitleg = `Voor brandstof gekocht aan de pomp krijg je een vast bedrag van ${eur(vw.pomp)} per jaar.`; }
+    else { const l = Math.min(p.liters || 0, vw.maxLiter); bedrag = l*vw.centMin;
+      uitleg = l ? `Voor ${l.toLocaleString("nl-BE")} liter is dat ${eur(l*vw.centMin)} tot ${eur(l*vw.centMax)}, afhankelijk van de prijs per liter (maximaal ${vw.maxLiter} liter). We tellen het laagste bedrag.` : "Vul in hoeveel liter je koopt om het bedrag te zien."; }
+    out.push({id:"vw",titel:"Verwarmingstoelage",status:(p.vt==="ja"||autoVT)?"ja":"mogelijk",bedrag,kalender:"levering",
+      waarom:"Het Sociaal Verwarmingsfonds betaalt een deel van je stookolie, propaan of petroleum terug. " + uitleg,
+      stappen:["Bewaar de factuur of het kasticket van elke levering.","Ga binnen 60 dagen na de levering naar het OCMW van je gemeente. Zet de leverdatum in de Geldkalender, dan zie je de deadline.","Neem je identiteitskaart en je laatste aanslagbiljet mee."],bron:vw});
+  } else if (brandstof) na.push(p.inkomenGekend ? `Verwarmingstoelage: je inkomen ligt boven ${eur(vwGrens)} en je hebt geen verhoogde tegemoetkoming.` : "Verwarmingstoelage: vul je inkomen in om dit te checken.");
+  else na.push("Verwarmingstoelage: alleen voor stookolie, propaan in een tank of petroleum.");
+
+  const hp = R.huurpremie;
+  if (p.gewest !== "vl") na.push("Vlaamse huurpremie: alleen in Vlaanderen. Brussel en Wallonië hebben eigen regelingen die deze versie nog niet kent.");
+  else if (p.wonen !== "prive") na.push("Vlaamse huurpremie: alleen voor wie privé huurt.");
+  else {
+    const alleen = p.volw === 1 && p.last === 0;
+    const grens = (alleen ? (p.u_handicap ? hp.grensAlleenHandicap : hp.grensAlleen) : hp.grensGezin) + hp.grensPer*p.last;
+    const inkomenOk = p.inkomenGekend && p.inkomen <= grens;
+    const maand = hp.bedrag[Math.min(p.last,4)];
+    const huurHoog = p.huur > hp.huurGrens;
+    if (!p.inkomenGekend) na.push("Vlaamse huurpremie: vul je inkomen in om dit te checken.");
+    else if (!inkomenOk) na.push(`Vlaamse huurpremie: je inkomen ligt boven ${eur(grens)}.`);
+    else if (p.wachtlijst === "lang") out.push({id:"hp",titel:"Vlaamse huurpremie",status:huurHoog?"mogelijk":"ja",bedrag:maand*12,
+      waarom:`Je staat al 4 jaar of langer op de wachtlijst voor een sociale woning en je inkomen ligt onder ${eur(grens)}. Je krijgt tot ${eur2(maand)} per maand (in sommige gemeenten 10% meer).` + (huurHoog ? ` Je huur ligt boven ${eur2(hp.huurGrens)}. Met personen ten laste kan de grens hoger liggen, dus laat het nakijken.` : ""),
+      stappen:["Normaal stuurt Wonen in Vlaanderen je zelf een aanvraagformulier. Stuur het op tijd terug, met een kopie van je huurcontract.","Nooit een formulier gekregen? Vraag het aan via Wonen in Vlaanderen.","Blijf ingeschreven op de wachtlijst, anders stopt de premie."],bron:hp});
+    else out.push({id:"hp",titel:"Vlaamse huurpremie",status:"later",bedrag:0,kalender:"wachtlijst",
+      waarom: p.wachtlijst === "kort" ? `Na 4 jaar op de wachtlijst krijg je tot ${eur2(maand)} per maand, als je dan nog privé huurt en je inkomen onder de grens blijft.` : `Je inkomen geeft toegang tot een sociale woning. Wie 4 jaar op de wachtlijst staat en privé huurt, krijgt tot ${eur2(maand)} per maand huurpremie.`,
+      stappen: p.wachtlijst === "kort" ? ["Zet je inschrijvingsdatum in de Geldkalender. Je ziet dan wanneer de 4 jaar om zijn.","Blijf ingeschreven en reageer altijd op brieven van je woonmaatschappij."] : ["Schrijf je in bij de woonmaatschappij van je gemeente. Elke maand die je wacht met inschrijven, telt niet mee.","Zet je inschrijvingsdatum daarna in de Geldkalender."],bron:hp});
+  }
+
+  const ig = R.igo;
+  if (p.u_igo) na.push("Inkomensgarantie voor ouderen: je krijgt ze al.");
+  else if (!p.oud) na.push("Inkomensgarantie voor ouderen: vanaf 66 jaar.");
+  else if (!p.inkomenGekend) na.push("Inkomensgarantie voor ouderen: vul je inkomen in om dit te checken.");
+  else {
+    const grens = p.volw === 1 ? ig.verhoogd : ig.basis*2;
+    const perMaand = p.inkomen/12;
+    if (perMaand < grens) out.push({id:"igo",titel:"Inkomensgarantie voor ouderen (IGO)",status:"mogelijk",bedrag:(grens-perMaand)*12,
+      waarom:`Je gezinsinkomen is ongeveer ${eur(perMaand)} per maand. De IGO vult aan tot ${eur2(p.volw===1?ig.verhoogd:ig.basis)} per maand per persoon. Het bedrag is een ruwe schatting: de Pensioendienst telt ook spaargeld en eigendom mee, en telt een deel van je pensioen niet mee.`,
+      stappen:["Vraag de IGO aan via mypension.be of bel de Pensioenlijn op 1765.","Je kunt ook naar het gemeentehuis gaan.","De IGO geldt pas vanaf de maand na je aanvraag. Wachten kost dus geld."],
+      link:{href:"https://www.mypension.be",tekst:"Naar mypension.be"},bron:ig});
+    else na.push("Inkomensgarantie voor ouderen: je inkomen ligt boven de grens.");
+  }
+
+  const si = R.internet;
+  if (p.u_leefloon && p.net !== "geen"){
+    const max = p.net === "internet" ? si.alleen : si.bundel;
+    out.push({id:"si",titel:"Sociaal internetaanbod",status:"mogelijk",bedrag:p.netprijs ? Math.max(0,p.netprijs-max)*12 : 0,
+      waarom:`Met een leefloon of steun van het OCMW heb je recht op internet voor maximaal ${eur(si.alleen)} per maand, of ${eur(si.bundel)} met tv, vaste lijn of gsm erbij. De installatie kost de helft.`,
+      stappen:["Vraag het sociaal internetaanbod aan bij je internetoperator. Die krijgt alleen een ja of nee, geen details over jou.","Had je vroeger al een sociaal telefoontarief? Wie overstapt, kan niet meer terug. Vergelijk eerst."],bron:si});
+  } else na.push("Sociaal internetaanbod: alleen met een leefloon of steun van het OCMW.");
+
+  if (p.net !== "geen" && p.vergeleken !== "recent"){
+    const r = p.net === "internet" ? R.bipt.alleen : R.bipt.bundel;
+    contracts.push({id:"tel",titel:"Je internetabonnement",status:"check",bedragTekst:`tot ${eur(r[0])}–${eur(r[1])} per jaar`,brief:"tel",kalender:"internet",
+      waarom:`Volgens het BIPT kan het verschil tussen de duurste en goedkoopste formule ${p.net==="internet"?"voor alleen internet":"voor internet met tv"} oplopen tot ${eur(r[0])} à ${eur(r[1])} per jaar. Belgen betalen de hoogste telecomprijzen van de EU.`,
+      stappen:["Je operator moet je minstens één keer per jaar zeggen welk tariefplan voor jou het goedkoopst is. Vraag het schriftelijk met de brief bij Brieven.","Vergelijk ook zelf, bijvoorbeeld op bestetarief.be. Kijk ook naar de goedkopere merken van dezelfde groep.","Overstappen kan zonder opzegkosten zodra je contract 6 maanden loopt."],bron:R.bipt});
+  }
+  if ((p.elek || p.gasv) && !autoVT && p.gewest === "vl"){
+    contracts.push({id:"en",titel:"Je energiecontract",status:"check",bedragTekst:"",kalender:"energie",
+      waarom:"De VREG heeft een gratis V-check: scan de QR-code op je energiefactuur en je ziet meteen of je contract groen, oranje of rood scoort. Je hoeft geen persoonlijke gegevens in te vullen.",
+      stappen:["Neem je laatste energiefactuur en scan de QR-code met de V-check.","Oranje of rood? Doe de V-test om alle contracten te vergelijken."],
+      link:{href:"https://vtest.vreg.be/v-check",tekst:"Naar de V-check van de VREG"},bron:{bron:"https://vtest.vreg.be/",bronNaam:"VREG"}});
+  }
+  return {out,na,contracts};
+}
+
+/* ===================== Kalender ===================== */
+const EVTYPES = {
+  levering:{label:"Levering stookolie, propaan of petroleum",datum:"Leverdatum",
+    uitleg:"Je hebt 60 dagen na de levering om de verwarmingstoelage aan te vragen bij het OCMW.",
+    make:(e)=>[{datum:addDays(e.datum,R.verwarming.termijn),titel:"Laatste dag: verwarmingstoelage aanvragen",tekst:`Voor je levering van ${longDate(e.datum)}. Ga naar het OCMW met je factuur, identiteitskaart en laatste aanslagbiljet.`,hard:true}]},
+  internet:{label:"Start internet- of gsm-contract",datum:"Startdatum van je contract",
+    uitleg:"Na 6 maanden kun je kosteloos opzeggen. Elk jaar vraag je best je goedkoopste tarief op.",
+    make:(e)=>{ const r=[]; const zes=addMonths(e.datum,6);
+      if (daysUntil(zes) >= 0) r.push({datum:zes,titel:"Je kunt je internetcontract kosteloos opzeggen",tekst:"Vanaf nu betaal je geen opzegkosten meer. Vergelijk en stap over als het goedkoper kan."});
+      r.push({datum:nextAnniversary(e.datum),titel:"Vraag je goedkoopste tarief op",tekst:"Je contract loopt weer een jaar. Vraag je operator welk tariefplan voor jou het goedkoopst is (brief bij Brieven) en vergelijk op bestetarief.be."}); return r; }},
+  energie:{label:"Verjaardag van je energiecontract",datum:"Startdatum van je contract",
+    uitleg:"Elk jaar loont het om je energiecontract te checken met de V-check van de VREG.",
+    make:(e)=>[{datum:nextAnniversary(e.datum),titel:"Check je energiecontract",tekst:"Scan de QR-code op je energiefactuur met de V-check van de VREG. Oranje of rood? Vergelijk met de V-test."}]},
+  wachtlijst:{label:"Inschrijving wachtlijst sociale woning",datum:"Datum van inschrijving",
+    uitleg:"Na 4 jaar op de wachtlijst kun je recht hebben op de Vlaamse huurpremie.",
+    make:(e)=>[{datum:addMonths(e.datum,48),titel:"4 jaar op de wachtlijst: Vlaamse huurpremie",tekst:"Je kunt nu recht hebben op de huurpremie. Normaal krijg je een formulier van Wonen in Vlaanderen. Niets gekregen? Vraag het aan."}]},
+  pensioen:{label:"66ste verjaardag",datum:"Datum waarop je 66 wordt",
+    uitleg:"Vanaf 66 kun je de inkomensgarantie voor ouderen krijgen als je pensioen laag is.",
+    make:(e)=>[{datum:e.datum,titel:"Inkomensgarantie voor ouderen",tekst:"Is je pensioen laag? Vraag de IGO aan via mypension.be of de Pensioenlijn (1765). Ze geldt pas vanaf de maand na je aanvraag."}]},
+  eigen:{label:"Eigen herinnering",datum:"Datum",uitleg:"Bijvoorbeeld: antwoord van het ziekenfonds opvolgen.",
+    make:(e)=>[{datum:e.datum,titel:e.titel||"Herinnering",tekst:e.notitie||""}]}
+};
+function fixedEvents(){
+  const t = today(), y = t.getFullYear(), out = [];
+  const next = (m,d) => { let dt = new Date(y,m,d); if (dt < t) dt = new Date(y+1,m,d); return iso(dt); };
+  out.push({datum:next(0,1),titel:"Nieuwe bedragen: doe de scan opnieuw",tekst:"Op 1 januari worden veel grensbedragen en premies geïndexeerd. Misschien heb je nu wel recht op iets.",vast:true});
+  out.push({datum:next(8,1),titel:"Nieuwe grens verhoogde tegemoetkoming",tekst:"Het RIZIV past de inkomensgrens aan. Check opnieuw of je recht hebt.",vast:true});
+  return out;
+}
+function allEvents(){
+  const items = fixedEvents();
+  for (const e of S.events){ const t = EVTYPES[e.type]; if (!t) continue; for (const it of t.make(e)) items.push(Object.assign({src:e.id}, it)); }
+  return items.sort((a,b) => a.datum.localeCompare(b.datum));
+}
+function calLinks(it){
+  const d = it.datum.replace(/-/g,""), d2 = addDays(it.datum,1).replace(/-/g,"");
+  const details = it.tekst + "\n\nVia Geldlek";
+  const g = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(it.titel)}&dates=${d}/${d2}&details=${encodeURIComponent(details)}`;
+  const o = `https://outlook.live.com/calendar/0/deeplink/compose?path=%2Fcalendar%2Faction%2Fcompose&rru=addevent&allday=true&startdt=${it.datum}&enddt=${addDays(it.datum,1)}&subject=${encodeURIComponent(it.titel)}&body=${encodeURIComponent(details)}`;
+  return {g,o};
+}
+function icsFor(it){
+  const d = it.datum.replace(/-/g,""), d2 = addDays(it.datum,1).replace(/-/g,"");
+  const escI = s => s.replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\n/g,"\\n");
+  const stamp = new Date().toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Geldlek//NL","BEGIN:VEVENT",`UID:${uid()}@geldlek`,`DTSTAMP:${stamp}`,
+    `DTSTART;VALUE=DATE:${d}`,`DTEND;VALUE=DATE:${d2}`,`SUMMARY:${escI(it.titel)}`,`DESCRIPTION:${escI(it.tekst)}`,
+    "BEGIN:VALARM","ACTION:DISPLAY",`DESCRIPTION:${escI(it.titel)}`,"TRIGGER:-P7D","END:VALARM",
+    "BEGIN:VALARM","ACTION:DISPLAY",`DESCRIPTION:${escI(it.titel)}`,"TRIGGER:-P1D","END:VALARM",
+    "END:VEVENT","END:VCALENDAR"].join("\r\n");
+}
+/* In de Claude-voorvertoning kunnen pagina's geen .ics-bestand aanbieden; op je eigen site (GitHub Pages) wel. */
+const CAN_ICS = !window.claude;
+function downloadIcs(it){
+  try{ const blob = new Blob([icsFor(it)],{type:"text/calendar"}); const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "geldlek-" + it.datum + ".ics"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000); }catch(e){}
+}
+
+/* ===================== Brieven ===================== */
+const BRIEVEN = [
+  {id:"vt",titel:"Verhoogde tegemoetkoming aanvragen",aan:"Aan je ziekenfonds (mail of contactformulier)",
+   tekst:(m)=>`Onderwerp: Aanvraag verhoogde tegemoetkoming
+
+Beste,
+
+Ik wil graag de verhoogde tegemoetkoming aanvragen. Volgens mijn berekening ligt het inkomen van mijn gezin onder de grens.
+
+Kunt u mij laten weten welke verklaring en welke bewijsstukken ik moet bezorgen? Mijn laatste aanslagbiljet heb ik klaar.
+
+Naam: ${m.naam||"[naam]"}
+Adres: ${m.adres||"[adres]"}
+Rijksregister- of lidnummer: ${m.nummer||"[nummer]"}
+
+Alvast bedankt.
+
+Met vriendelijke groeten,
+${m.naam||"[naam]"}`},
+  {id:"tel",titel:"Je goedkoopste telecomtarief opvragen",aan:"Aan je internet- of gsm-operator (mail, chat of contactformulier)",
+   tekst:(m)=>`Onderwerp: Vraag naar mijn voordeligste tariefplan
+
+Beste,
+
+Volgens de wet betreffende de elektronische communicatie moet u mij informeren over het tariefplan dat voor mijn verbruik het voordeligst is.
+
+Kunt u mij schriftelijk laten weten welk tariefplan dat is, op basis van mijn verbruik van de afgelopen maanden? Graag ook wat het mij per maand zou kosten en of er opzegkosten of voorwaarden aan verbonden zijn.
+
+Naam: ${m.naam||"[naam]"}
+Adres: ${m.adres||"[adres]"}
+Klantnummer: ${m.nummer||"[klantnummer]"}
+
+Ik kijk uit naar uw antwoord.
+
+Met vriendelijke groeten,
+${m.naam||"[naam]"}`},
+  {id:"st",titel:"Sociaal tarief voor gemeenschappelijke verwarming",aan:"Aan je woonmaatschappij",
+   tekst:(m)=>`Onderwerp: Sociaal tarief voor de gemeenschappelijke gasverwarming
+
+Beste,
+
+Ik huur een sociaal appartement met een gemeenschappelijke gasverwarming. Huurders in die situatie hebben recht op het sociaal tarief voor energie, op voorwaarde dat de verhuurder het aanvraagt en de korting doorrekent.
+
+Kunt u bevestigen dat het sociaal tarief voor ons gebouw aangevraagd is, en hoe de korting in mijn huurlasten verrekend wordt?
+
+Naam: ${m.naam||"[naam]"}
+Adres: ${m.adres||"[adres]"}
+
+Met vriendelijke groeten,
+${m.naam||"[naam]"}`}
+];
+
+/* ===================== Weergave ===================== */
+const LABEL = {ja:"Waarschijnlijk recht",mogelijk:"Mogelijk recht",al:"Al in orde",later:"Voor later",check:"Nakijken"};
+const ORDER = {ja:0,mogelijk:1,later:2,al:3};
+const TRACK = {open:"Nog te doen",aangevraagd:"Aangevraagd",ontvangen:"Ontvangen",nvt:"Niet voor mij"};
+let isSample = true, lastResult = null;
+
+function currentAnswers(){ return normalize(isSample ? SAMPLE : (S.answers || EMPTY)); }
+
+function trackFor(id){ return S.track[id] || {status:"open",bedrag:null}; }
+
+function card(r, opts){
+  const amt = r.bedragTekst ? r.bedragTekst : (r.bedrag ? eur(r.bedrag) + " per jaar" : "");
+  const tr = trackFor(r.id);
+  const trackable = r.status === "ja" || r.status === "mogelijk" || r.status === "check";
+  const isContract = r.status === "check";
+  const statusOpts = isContract
+    ? [["open","Nog te doen"],["aangevraagd","Bezig met vergelijken"],["ontvangen","Overgestapt of goedkoper"],["nvt","Niet nodig"]]
+    : Object.entries(TRACK);
+  const showAmount = tr.status === "ontvangen";
+  return `<article class="card ${tr.status==="ontvangen"||tr.status==="nvt"?"done":""}" data-id="${r.id}">
+    <div class="card-top"><h4>${esc(r.titel)}</h4>${amt ? `<span class="amt">${esc(amt)}</span>` : ""}</div>
+    <div><span class="chip s-${r.status}">${LABEL[r.status]}</span></div>
+    <p class="why">${esc(r.waarom)}</p>
+    ${r.stappen.length ? `<ol class="steps">${r.stappen.map(s => `<li>${esc(s)}</li>`).join("")}</ol>` : ""}
+    <div class="actions">
+      ${r.link ? `<a class="btn btn-ghost btn-small" href="${r.link.href}" target="_blank" rel="noopener">${esc(r.link.tekst)} ↗</a>` : ""}
+      ${r.brief ? `<a class="btn btn-ghost btn-small" href="#brieven" data-brief="${r.brief}">Brief klaarmaken</a>` : ""}
+      ${r.kalender ? `<a class="btn btn-ghost btn-small" href="#kalender" data-kal="${r.kalender}">Datum in kalender</a>` : ""}
+    </div>
+    ${trackable && !opts.sample ? `<div class="track">
+      <label class="f" for="tr-${r.id}">Status<select id="tr-${r.id}" data-track="${r.id}">${statusOpts.map(([v,l]) => `<option value="${v}" ${tr.status===v?"selected":""}>${l}</option>`).join("")}</select></label>
+      <label class="f" for="trb-${r.id}" ${showAmount?"":"hidden"}>${isContract?"Bespaard per jaar":"Ontvangen per jaar"}<span class="euro"><input type="number" min="0" id="trb-${r.id}" data-trackamt="${r.id}" value="${tr.bedrag ?? (r.bedrag ? Math.round(r.bedrag) : "")}" inputmode="numeric"></span></label>
+    </div>` : ""}
+    <p class="src">Bron: <a href="${r.bron.bron}" target="_blank" rel="noopener">${esc(r.bron.bronNaam)}</a> · nagekeken oktober 2026</p>
+  </article>`;
+}
+
+function renderScan(){
+  const p = currentAnswers();
+  $("sub_prive").hidden = p.wonen !== "prive";
+  $("sub_sociaal").hidden = p.wonen !== "sociaal";
+  $("sub_liters").hidden = !["stookolie","propaan"].includes(p.verwarming);
+  const res = evaluate(p); lastResult = res;
+  const telt = res.out.filter(r => (r.status==="ja"||r.status==="mogelijk") && r.bedrag > 0);
+  const total = telt.reduce((s,r) => s + r.bedrag, 0);
+  res.total = total;
+  $("total").innerHTML = `${eur(total)}<small> /jaar</small>`;
+  const extra = res.out.filter(r => (r.status==="ja"||r.status==="mogelijk") && !r.bedrag);
+  const lines = telt.map(r => `<li><span>${esc(r.titel)}</span><span>${eur(r.bedrag)}</span></li>`)
+    .concat(extra.map(r => `<li><span>${esc(r.titel)}</span><span>+ voordeel</span></li>`))
+    .concat(res.contracts.map(r => `<li><span>${esc(r.titel)}</span><span>nakijken</span></li>`));
+  $("lines").innerHTML = lines.length ? lines.join("") : `<li class="empty">Nog niets gevonden.</li>`;
+}
+
+function renderMijn(){
+  const res = lastResult; if (!res) return;
+  const out = res.out.slice().sort((a,b) => ORDER[a.status]-ORDER[b.status] || b.bedrag-a.bedrag);
+  $("sample2").hidden = !isSample;
+  $("rechten").innerHTML = out.length ? out.map(r => card(r,{sample:isSample})).join("") : `<p class="muted" style="margin:0">Op basis van je antwoorden vinden we geen rechten die je laat liggen. Check zeker je contracten.</p>`;
+  $("contracten").innerHTML = res.contracts.length ? res.contracts.map(r => card(r,{sample:isSample})).join("") : `<p class="muted" style="margin:0">Niets om na te kijken. Je hebt recent vergeleken, of je hebt geen contract ingevuld.</p>`;
+  $("na-list").innerHTML = res.na.map(t => `<li>${esc(t)}</li>`).join("");
+  $("na").hidden = !res.na.length;
+  // strip
+  let found = 0, busy = 0, won = 0;
+  for (const r of res.out.concat(res.contracts)){
+    const val = r.bedrag || 0;
+    const tr = isSample ? {status:"open"} : trackFor(r.id);
+    if ((r.status==="ja"||r.status==="mogelijk") ) found += val;
+    if (tr.status === "aangevraagd") busy += val;
+    if (tr.status === "ontvangen") won += (tr.bedrag != null ? +tr.bedrag : val) || 0;
+  }
+  $("s-found").textContent = eur(found); $("s-busy").textContent = eur(busy); $("s-won").textContent = eur(won);
+  const base = Math.max(found, won + busy, 1);
+  $("bar-won").style.width = (won/base*100) + "%"; $("bar-busy").style.width = (busy/base*100) + "%";
+}
+
+function renderKalender(){
+  const items = allEvents();
+  const html = items.map(it => {
+    const n = daysUntil(it.datum), d = parse(it.datum);
+    const urgent = it.hard && n >= 0 && n <= 14 || (!it.vast && n >= 0 && n <= 14);
+    const past = n < 0;
+    const count = past ? `${-n} dagen geleden` : n === 0 ? "vandaag" : n === 1 ? "morgen" : `nog ${n} dagen`;
+    const {g,o} = calLinks(it);
+    return `<div class="ev ${urgent?"urgent":""} ${past?"past":""}">
+      <div class="date" aria-hidden="true"><b>${d.getDate()}</b><span>${MAAND[d.getMonth()]} ${String(d.getFullYear()).slice(2)}</span></div>
+      <div class="ev-body">
+        <span class="count">${count}${it.vast ? " · elk jaar" : ""}</span>
+        <h4>${esc(it.titel)}</h4>
+        <p>${esc(it.tekst)}</p>
+        <div class="actions">
+          <a class="btn btn-ghost btn-small" href="${g}" target="_blank" rel="noopener">Google Agenda ↗</a>
+          <a class="btn btn-ghost btn-small" href="${o}" target="_blank" rel="noopener">Outlook ↗</a>
+          ${CAN_ICS ? `<button type="button" class="btn-ghost btn-small" data-ics="${it.datum}|${esc(it.titel)}">Agenda (.ics)</button>` : ""}
+          ${it.src ? `<button type="button" class="btn-ghost btn-small" data-del="${it.src}">Verwijderen</button>` : ""}
+        </div>
+      </div></div>`;
+  }).join("");
+  $("cal").innerHTML = html || `<p class="empty-state">Nog geen data. Voeg er hierboven een toe.</p>`;
+  const urgentCount = items.filter(it => !it.vast && daysUntil(it.datum) >= 0 && daysUntil(it.datum) <= 14).length;
+  $("badge").hidden = !urgentCount; $("badge").textContent = urgentCount;
+  $("alert").hidden = !urgentCount || currentView === "kalender";
+  $("alert-text").innerHTML = urgentCount === 1 ? "<strong>1 deadline</strong> binnen de 14 dagen." : `<strong>${urgentCount} deadlines</strong> binnen de 14 dagen.`;
+}
+
+function renderBrieven(focus){
+  ["naam","adres","nummer"].forEach(k => { const el = $("b-"+k); if (document.activeElement !== el) el.value = S.me[k] || ""; });
+  $("brieven").innerHTML = BRIEVEN.map(b => `<article class="card" id="brief-${b.id}">
+    <h4>${esc(b.titel)}</h4><p class="note">${esc(b.aan)}</p>
+    <pre class="letter" id="txt-${b.id}">${esc(b.tekst(S.me))}</pre>
+    <div class="actions"><button type="button" class="btn-primary btn-small" data-copy="${b.id}">Kopieer tekst</button></div>
+    <p class="copied" id="msg-${b.id}" aria-live="polite"></p></article>`).join("");
+  if (focus){ const el = $("brief-"+focus); if (el) el.scrollIntoView({block:"start"}); }
+}
+
+/* ===================== Navigatie ===================== */
+const VIEWS = ["scan","mijn","kalender","brieven"];
+let currentView = "scan", pendingBrief = null;
+function route(){
+  const h = location.hash.replace("#","");
+  currentView = VIEWS.includes(h) ? h : "scan";
+  VIEWS.forEach(v => $("v-"+v).hidden = v !== currentView);
+  document.querySelectorAll(".tab").forEach(t => { if (t.dataset.v === currentView) t.setAttribute("aria-current","page"); else t.removeAttribute("aria-current"); });
+  if (currentView === "mijn") renderMijn();
+  if (currentView === "brieven"){ renderBrieven(pendingBrief); pendingBrief = null; }
+  renderKalender();
+  if (currentView !== "scan") window.scrollTo(0,0);
+}
+window.addEventListener("hashchange", route);
+
+/* ===================== Gebeurtenissen ===================== */
+$("scan").addEventListener("input", () => {
+  if (isSample){ isSample = false; $("sample").hidden = true; }
+  S.answers = readForm(); saveState(); renderScan();
+});
+$("scan").addEventListener("change", () => { if (!isSample){ S.answers = readForm(); saveState(); } renderScan(); });
+$("scan").addEventListener("submit", e => e.preventDefault());
+$("clear").addEventListener("click", () => { fill(EMPTY); isSample = false; $("sample").hidden = true; S.answers = readForm(); saveState(); renderScan(); $("volw").focus(); });
+
+$("share").addEventListener("click", () => {
+  const t = (lastResult && lastResult.total > 0
+    ? `Ik deed de Geldlek-scan en liet mogelijk ${eur(lastResult.total)} per jaar liggen. Duurt 5 minuten, je gegevens blijven op je eigen toestel. Doe ook de scan:`
+    : `Met Geldlek zie je in 5 minuten welke tegemoetkomingen je laat liggen. Je gegevens blijven op je eigen toestel:`) + " " + location.href.split("#")[0];
+  const ta = $("share-text");
+  const fb = () => { ta.value = t; ta.hidden = false; ta.select(); $("copied").textContent = "Selecteer en kopieer de tekst hierboven."; };
+  try { navigator.clipboard.writeText(t).then(() => { $("copied").textContent = "Gekopieerd. Plak het in een bericht of post."; }, fb); } catch(e){ fb(); }
+});
+
+document.addEventListener("change", e => {
+  const id = e.target.dataset.track;
+  if (id){ const tr = trackFor(id); tr.status = e.target.value; S.track[id] = tr; saveState(); renderMijn(); }
+});
+document.addEventListener("input", e => {
+  const id = e.target.dataset.trackamt;
+  if (id){ const tr = trackFor(id); const v = parseFloat(e.target.value); tr.bedrag = isFinite(v) ? v : null; S.track[id] = tr; saveState();
+    const sel = document.activeElement; renderMijn(); const again = $(sel.id); if (again){ again.focus(); const l = again.value.length; try{ again.setSelectionRange(l,l); }catch(_){} } }
+  const m = e.target.id && e.target.id.startsWith("b-") ? e.target.id.slice(2) : null;
+  if (m && ["naam","adres","nummer"].includes(m)){ S.me[m] = e.target.value; saveState();
+    BRIEVEN.forEach(b => { const el = $("txt-"+b.id); if (el) el.textContent = b.tekst(S.me); }); }
+});
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-brief],[data-kal],[data-ics],[data-del],[data-copy]"); if (!t) return;
+  if (t.dataset.brief) pendingBrief = t.dataset.brief;
+  if (t.dataset.kal){ $("ev-type").value = t.dataset.kal; updateEvForm(); setTimeout(() => $("ev-datum").focus(), 50); }
+  if (t.dataset.ics){ const [datum, titel] = t.dataset.ics.split("|"); const it = allEvents().find(x => x.datum === datum && x.titel === titel); if (it) downloadIcs(it); }
+  if (t.dataset.del){ S.events = S.events.filter(x => x.id !== t.dataset.del); saveState(); renderKalender(); }
+  if (t.dataset.copy){ const id = t.dataset.copy, txt = $("txt-"+id).textContent;
+    const ok = () => $("msg-"+id).textContent = "Gekopieerd. Plak het in een mail of contactformulier.";
+    const fb = () => { const r = document.createRange(); r.selectNodeContents($("txt-"+id)); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $("msg-"+id).textContent = "De tekst is geselecteerd. Kopieer hem met je toestel."; };
+    try { navigator.clipboard.writeText(txt).then(ok, fb); } catch(_){ fb(); } }
+});
+
+$("ev-type").innerHTML = Object.entries(EVTYPES).map(([k,v]) => `<option value="${k}">${esc(v.label)}</option>`).join("");
+function updateEvForm(){ const t = EVTYPES[$("ev-type").value]; $("ev-datum-label").textContent = t.datum; $("ev-uitleg").textContent = t.uitleg; $("ev-titel-wrap").hidden = $("ev-type").value !== "eigen"; $("ev-msg").textContent = ""; }
+$("ev-type").addEventListener("change", updateEvForm);
+$("evform").addEventListener("submit", e => {
+  e.preventDefault();
+  const datum = $("ev-datum").value;
+  if (!datum){ $("ev-msg").textContent = "Kies eerst een datum."; return; }
+  const ev = {id:uid(), type:$("ev-type").value, datum};
+  if (ev.type === "eigen"){ ev.titel = $("ev-titel").value.trim() || "Herinnering"; }
+  S.events.push(ev); saveState();
+  const made = EVTYPES[ev.type].make(ev);
+  $("ev-msg").textContent = "Toegevoegd. " + made.map(m => `${m.titel} (${longDate(m.datum)})`).join(" · ");
+  $("ev-datum").value = ""; $("ev-titel").value = "";
+  renderKalender();
+});
+
+/* Back-up en wissen */
+$("bk-copy").addEventListener("click", () => {
+  const t = JSON.stringify(S); const ta = $("bk-text");
+  const fb = () => { ta.value = t; ta.hidden = false; ta.select(); $("bk-msg").textContent = "Selecteer en kopieer de tekst, en bewaar hem op een veilige plek."; };
+  try { navigator.clipboard.writeText(t).then(() => $("bk-msg").textContent = "Back-up gekopieerd. Bewaar hem bv. in een notitie of mail aan jezelf.", fb); } catch(_){ fb(); }
+});
+$("bk-restore-open").addEventListener("click", () => { $("bk-text").value = ""; $("bk-text").hidden = false; $("bk-restore-actions").hidden = false; $("bk-text").focus(); $("bk-msg").textContent = "Plak je back-up in het vak en klik op Terugzetten."; });
+$("bk-restore").addEventListener("click", () => {
+  try { const s = JSON.parse($("bk-text").value); if (typeof s !== "object" || !s) throw 0;
+    S = Object.assign({answers:null,track:{},events:[],me:{naam:"",adres:"",nummer:""}}, s); saveState(); boot(); $("bk-msg").textContent = "Back-up teruggezet.";
+    $("bk-text").hidden = true; $("bk-restore-actions").hidden = true;
+  } catch(_){ $("bk-msg").textContent = "Dit is geen geldige back-up. Plak de volledige tekst die je eerder kopieerde."; }
+});
+$("wipe-open").addEventListener("click", () => $("wipe-confirm").hidden = false);
+$("wipe-cancel").addEventListener("click", () => $("wipe-confirm").hidden = true);
+$("wipe").addEventListener("click", () => {
+  try{ localStorage.removeItem(KEY); }catch(_){}
+  S = {answers:null,track:{},events:[],me:{naam:"",adres:"",nummer:""}};
+  $("wipe-confirm").hidden = true; boot(); $("bk-msg").textContent = "Alles is gewist van dit toestel.";
+});
+
+/* Installeren (PWA) */
+let deferredPrompt = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferredPrompt = e; $("install").hidden = false; });
+$("install").addEventListener("click", async () => { if (!deferredPrompt) return; deferredPrompt.prompt(); try { await deferredPrompt.userChoice; } catch(_){} deferredPrompt = null; $("install").hidden = true; });
+if ("serviceWorker" in navigator && location.protocol === "https:"){
+  try { navigator.serviceWorker.register("sw.js").catch(() => {}); } catch(_){}
+}
+
+/* Start */
+function boot(){
+  loadState();
+  isSample = !S.answers;
+  fill(isSample ? SAMPLE : S.answers);
+  $("sample").hidden = !isSample;
+  renderScan(); updateEvForm(); route();
+}
+boot();
+</script>
