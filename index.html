@@ -128,7 +128,7 @@ legend{font-family:var(--f-display);font-weight:700;font-size:1.2rem;padding:0 6
 .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
 label.f{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:1rem;min-width:0}
 .hint{font-weight:400;color:var(--muted);font-size:.9rem}
-input[type=number],input[type=date],input[type=text],select,textarea{font:inherit;font-size:1rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-height:48px}
+input[type=number],input[type=date],input[type=text],select,textarea{font:inherit;font-size:1rem;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-height:48px}
 textarea{min-height:110px;resize:vertical}
 .euro{position:relative;display:block}
 .euro input{padding-left:30px}
@@ -172,6 +172,11 @@ textarea{min-height:110px;resize:vertical}
 .s-ja{background:var(--ok-bg);color:var(--ok)} .s-mogelijk{background:var(--maybe-bg);color:var(--maybe)}
 .s-al,.s-later{background:var(--later-bg);color:var(--later)} .s-check{background:var(--warn-bg);color:var(--warn)}
 .s-key{background:var(--mantel-soft);color:var(--mantel)}
+.s-tip{background:var(--gold-bg);color:var(--gold)}
+.fiche-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.fiche-out{white-space:pre-wrap;font-family:var(--f-body);background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;margin:0;font-size:.98rem;overflow-wrap:anywhere}
+.mail{font-family:var(--f-mono);font-size:.95rem;user-select:all}
+@media print{body{background:#fff;padding:0}body *{visibility:hidden}#fiche-out,#fiche-out *{visibility:visible}#fiche-out{position:absolute;left:0;top:0;width:100%;border:0;color:#000}}
 .why{margin:0}
 .steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px}
 .src{font-size:.85rem;color:var(--muted);margin:0}
@@ -271,7 +276,7 @@ details.more ul{margin:8px 0 0;padding-left:1.2em}
     </div>
 
     <div id="start-next-wrap">
-      <h2 class="sec">Binnenkort</h2>
+      <h2 class="sec">Eerstvolgende deadlines</h2>
       <div class="cal" id="start-next"></div>
     </div>
 
@@ -458,6 +463,43 @@ details.more ul{margin:8px 0 0;padding-left:1.2em}
     <div class="list" id="brieven"></div>
   </section>
 
+  <!-- ================= ZORGFICHE ================= -->
+  <section class="view" id="v-fiche" aria-labelledby="h-fiche" hidden>
+    <div>
+      <h2 class="title" id="h-fiche">Zorgfiche van <span class="pname">je ouder</span></h2>
+      <p class="intro">Alles op één plek voor als het plots moet: bij een val, een spoedopname of een nieuwe thuisverpleegkundige. Vul in wat je weet. Kopieer de fiche en bewaar ze in je gsm, of geef een afdruk aan je ouder en de buren.</p>
+    </div>
+    <div class="chips" id="switch4" aria-label="Kies een persoon"></div>
+    <p class="note">🔒 Deze gegevens blijven op dit toestel. Let op: wie je via "Gegevens kopiëren" iets doorstuurt, krijgt ook de zorgfiche.</p>
+    <form id="ficheform" novalidate>
+      <fieldset>
+        <legend>Gezondheid</legend>
+        <div class="fiche-grid">
+          <label class="f" for="f-huisarts">Huisarts<span class="hint">Naam en telefoonnummer</span><input type="text" id="f-huisarts" data-fiche="huisarts"></label>
+          <label class="f" for="f-ziekenfonds">Ziekenfonds<span class="hint">Naam en lidnummer</span><input type="text" id="f-ziekenfonds" data-fiche="ziekenfonds"></label>
+          <label class="f" for="f-apotheek">Vaste apotheek<input type="text" id="f-apotheek" data-fiche="apotheek"></label>
+          <label class="f" for="f-thuiszorg">Thuisverpleging of gezinszorg<span class="hint">Dienst en telefoonnummer</span><input type="text" id="f-thuiszorg" data-fiche="thuiszorg"></label>
+        </div>
+        <label class="f" for="f-aandoeningen">Aandoeningen en belangrijke voorgeschiedenis<textarea id="f-aandoeningen" data-fiche="aandoeningen" rows="3"></textarea></label>
+        <label class="f" for="f-medicatie">Medicatie<span class="hint">Naam, dosis en wanneer. Neem de lijst over van de apotheek of de huisarts.</span><textarea id="f-medicatie" data-fiche="medicatie" rows="4"></textarea></label>
+        <label class="f" for="f-allergie">Allergieën<input type="text" id="f-allergie" data-fiche="allergie"></label>
+      </fieldset>
+      <fieldset>
+        <legend>Praktisch</legend>
+        <label class="f" for="f-nood">Wie bellen bij nood?<span class="hint">Namen en telefoonnummers, in volgorde</span><textarea id="f-nood" data-fiche="nood" rows="3"></textarea></label>
+        <label class="f" for="f-praktisch">Sleutel, huisdieren, hoorapparaat, bril…<textarea id="f-praktisch" data-fiche="praktisch" rows="3"></textarea></label>
+        <label class="f" for="f-wensen">Afspraken en wensen<span class="hint">Bijvoorbeeld: er is een zorgvolmacht bij notaris X, of afspraken over zorg met de huisarts</span><textarea id="f-wensen" data-fiche="wensen" rows="3"></textarea></label>
+      </fieldset>
+    </form>
+    <h3 class="sec">Zo ziet de fiche eruit</h3>
+    <pre class="fiche-out" id="fiche-out"></pre>
+    <div class="actions">
+      <button type="button" class="btn-primary" data-act="fiche-copy">Kopieer de fiche</button>
+      <button type="button" class="btn-ghost" data-act="fiche-print" id="fiche-print" hidden>Afdrukken</button>
+    </div>
+    <p class="copied" id="fiche-msg" aria-live="polite"></p>
+  </section>
+
   <!-- ================= VOOR JOU ================= -->
   <section class="view" id="v-voorjou" aria-labelledby="h-voorjou" hidden>
     <div class="care">
@@ -496,6 +538,21 @@ details.more ul{margin:8px 0 0;padding-left:1.2em}
         <p class="src">Bron: brochure mantelzorg van VIVEL op <a href="https://www.mantelzorgers.be" target="_blank" rel="noopener">mantelzorgers.be</a></p>
       </article>
       <article class="card">
+        <h4>Neem af en toe echt pauze</h4>
+        <p class="why">Zorgen houd je alleen vol als je zelf ook even kunt rusten. Daar bestaat hulp voor, die je zonder schuldgevoel mag gebruiken:</p>
+        <ul class="steps">
+          <li><strong>Oppashulp:</strong> een vrijwilliger of professional blijft overdag of 's nachts bij je ouder.</li>
+          <li><strong>Dagverzorgingscentrum:</strong> je ouder brengt de dag door met begeleiding, activiteiten en een warme maaltijd.</li>
+          <li><strong>Kortverblijf:</strong> je ouder logeert enkele dagen of weken in een woonzorgcentrum, bijvoorbeeld als jij op vakantie gaat.</li>
+          <li><strong>Thuishulp:</strong> gezinszorg, maaltijden aan huis, poets- en klusjesdienst, personenalarm.</li>
+        </ul>
+        <p class="why">Vraag ernaar bij de sociale dienst van het ziekenfonds, bij het lokaal dienstencentrum of bij de huisarts.</p>
+      </article>
+      <article class="card">
+        <h4>Praat erover met een psycholoog</h4>
+        <p class="why">Voel je je vaak moe, prikkelbaar of somber? Dat overkomt veel mantelzorgers. Via je huisarts of ziekenfonds kun je bij een eerstelijnspsycholoog terecht aan een laag tarief.</p>
+      </article>
+      <article class="card">
         <h4>Het is even te veel?</h4>
         <p class="why">Dat mag. Wil je je hart luchten, dag en nacht en anoniem? Bel Tele-Onthaal op <strong>106</strong>.</p>
       </article>
@@ -504,8 +561,14 @@ details.more ul{margin:8px 0 0;padding-left:1.2em}
 
   <!-- ================= INSTELLINGEN ================= -->
   <details class="more" id="over">
-    <summary>Wat is er nieuw, delen met broer of zus, back-up en installeren</summary>
+    <summary>Over Mantelmap, wat is er nieuw, delen met broer of zus, back-up en installeren</summary>
     <div class="list" style="margin-top:12px">
+      <div class="card">
+        <h4>Over Mantelmap</h4>
+        <p class="why">Mantelmap is een gratis, onafhankelijk initiatief om mantelzorgers te helpen. Het is niet verbonden aan de overheid, een ziekenfonds of een bank. Mantelmap geeft een inschatting: de officiële instantie beslist altijd.</p>
+        <p class="why">Iets onduidelijk, een fout gezien, of een idee? Mail naar <a class="mail" href="mailto:info@mantelmap.be">info@mantelmap.be</a>. Elke reactie maakt Mantelmap beter.</p>
+        <p class="why"><strong>Voor werkgevers en organisaties:</strong> wil je Mantelmap aanbieden aan je medewerkers of leden, in je eigen huisstijl? Mail naar hetzelfde adres.</p>
+      </div>
       <div class="card">
         <h4>Wat is er nieuw</h4>
         <p class="note">Mantelmap wordt bijgehouden. Bedragen laatst nagekeken in <span class="nagekeken">oktober 2026</span>.</p>
@@ -538,6 +601,8 @@ details.more ul{margin:8px 0 0;padding-left:1.2em}
 /* Bij elke update: zet NAGEKEKEN juist en voeg BOVENAAN een bericht toe aan NIEUWS (nieuwste eerst). */
 const NAGEKEKEN = "oktober 2026";
 const NIEUWS = [
+  {datum:"2026-11-16", titel:"Nieuw: de zorgfiche en de zorgvolmacht",
+   tekst:"Met de zorgfiche heb je huisarts, medicatie en noodnummers van je ouder altijd bij de hand, ook bij een spoedopname. In het plan lees je nu ook waarom een zorgvolmacht zo belangrijk is, en in Voor jou vind je hulp om zelf even op adem te komen."},
   {datum:"2026-10-31", titel:"Welkom bij Mantelmap",
    tekst:"De eerste versie staat online: de check voor je ouder, een plan, een agenda met deadlines, kant-en-klare brieven en een luik met rechten voor jou als mantelzorger. Alle bedragen zijn nagekeken in oktober 2026."}
 ];
@@ -718,6 +783,12 @@ function evaluate(per){
     waarom:`Met een leefloon of OCMW-steun: internet voor maximaal ${eur(R.internet.alleen)} per maand, of ${eur(R.internet.bundel)} met tv of telefoon erbij.`,
     stappen:["Vraag het aan bij de internetoperator."],bron:R.internet});
 
+  // Zorgvolmacht (regel het op tijd)
+  out.push({id:"zv",titel:"Zorgvolmacht: regel ze terwijl het nog kan",status:"tip",bedrag:0,fiche:true,
+    waarom:`Een gewone volmacht of bankvolmacht is strikt genomen niet meer geldig zodra ${N} niet meer zelf kan beslissen, bijvoorbeeld door dementie of na een beroerte. Zonder zorgvolmacht stelt de vrederechter een bewindvoerder aan, vaak een advocaat, die voor grote uitgaven toestemming van de rechter nodig heeft. Een zorgvolmacht kan alleen opgemaakt worden zolang ${N} alles nog goed begrijpt.`,
+    stappen:["Praat er rustig over met je ouder, en met broers en zussen: wie zou wat regelen?","Laat de zorgvolmacht opmaken bij een notaris. Reken op ongeveer €350 tot €600, inclusief de registratie. Is er een woning, dan is een notaris nodig.","Of maak ze zelf op en laat ze registreren via het vredegerecht. Dat is goedkoper, maar niet geschikt als er vastgoed is.","Bespreek met de huisarts ook welke zorg je ouder later wel of niet wil (voorafgaande zorgplanning). Noteer de afspraken in de zorgfiche."],
+    bron:{bron:"https://www.vrt.be/vrtnws/nl/2025/12/18/zorgvolmachten-in-de-lift-5-vragen-en-antwoorden/",bronNaam:"VRT NWS en Test-Aankoop"}});
+
   // Contracten
   if (thuis && p.net !== "geen" && p.vergeleken !== "recent"){
     const r = p.net === "internet" ? R.bipt.alleen : R.bipt.bundel;
@@ -875,8 +946,9 @@ ${d.mij}`}
 ];
 
 /* ===================== Weergave ===================== */
-const LABEL = {ja:"Waarschijnlijk recht",mogelijk:"Mogelijk recht",al:"Al in orde",later:"Volgt later",check:"Nakijken"};
-const ORDER = {ja:0,mogelijk:1,later:2,al:3};
+const LABEL = {ja:"Waarschijnlijk recht",mogelijk:"Mogelijk recht",al:"Al in orde",later:"Volgt later",check:"Nakijken",tip:"Regel het op tijd"};
+const TSTATUSES = [["open","Nog te doen"],["aangevraagd","Bezig"],["ontvangen","Geregeld"],["nvt","Niet nodig"]];
+const ORDER = {ja:0,mogelijk:1,tip:2,later:3,al:4};
 const STATUSES = [["open","Nog te doen"],["aangevraagd","Aangevraagd"],["ontvangen","Toegekend en binnen"],["nvt","Niet voor ons"]];
 const CSTATUSES = [["open","Nog te doen"],["aangevraagd","Bezig met vergelijken"],["ontvangen","Overgestapt of goedkoper"],["nvt","Niet nodig"]];
 let currentView = "start", pendingBrief = null, lastResult = null;
@@ -893,11 +965,11 @@ function renderStart(){
   $("h-people").textContent = real.length ? "Voor wie zorg je?" : "Zo ziet het eruit";
   $("people").innerHTML = S.people.map(p => {
     const r = evaluate(p);
-    const open = r.out.concat(r.contracts).filter(x => ["ja","mogelijk","check"].includes(x.status) && (p.track[x.id]?.status || "open") === "open").length;
+    const open = r.out.concat(r.contracts).filter(x => ["ja","mogelijk","check","tip"].includes(x.status) && (p.track[x.id]?.status || "open") === "open").length;
     return `<article class="person">
       <div class="person-head"><span class="avatar" aria-hidden="true">${esc(initial(p))}</span><div><h3>${esc(pname(p))}${p.sample?" <span class='chip s-mogelijk'>voorbeeld</span>":""}</h3><span class="note">${esc(open)} ${open===1?"stap":"stappen"} te doen</span></div></div>
       <div><span class="kicker">Mogelijk per jaar</span><div class="found">${eur(r.total)}</div></div>
-      <div class="actions"><button type="button" class="btn-primary btn-small" data-open="${p.id}" data-to="plan">Bekijk het plan</button><button type="button" class="btn-ghost btn-small" data-open="${p.id}" data-to="check">Gegevens</button></div>
+      <div class="actions"><button type="button" class="btn-primary btn-small" data-open="${p.id}" data-to="plan">Bekijk het plan</button><button type="button" class="btn-ghost btn-small" data-open="${p.id}" data-to="check">Gegevens</button><button type="button" class="btn-ghost btn-small" data-open="${p.id}" data-to="fiche">Zorgfiche</button></div>
     </article>`; }).join("");
   const items = allEvents().filter(it => !it.vast && daysUntil(it.datum) >= 0).slice(0,3);
   $("start-next-wrap").hidden = !items.length;
@@ -932,8 +1004,8 @@ function renderBon(){
 function card(r, per){
   const amt = r.bedragTekst ? r.bedragTekst : (r.bedrag ? eur(r.bedrag) + " per jaar" : "");
   const tr = per.track[r.id] || {status:"open",bedrag:null};
-  const trackable = ["ja","mogelijk","check"].includes(r.status);
-  const isC = r.status === "check";
+  const trackable = ["ja","mogelijk","check","tip"].includes(r.status);
+  const isC = r.status === "check", isT = r.status === "tip";
   return `<article class="card ${tr.status==="ontvangen"||tr.status==="nvt"?"done":""}">
     <div class="card-top"><h4>${esc(r.titel)}</h4>${amt?`<span class="amt">${esc(amt)}</span>`:""}</div>
     <div class="chips"><span class="chip s-${r.status}">${LABEL[r.status]}</span>${r.key?`<span class="chip s-key">Opent andere rechten</span>`:""}</div>
@@ -943,10 +1015,11 @@ function card(r, per){
       ${r.brief?`<a class="btn btn-ghost btn-small" href="#brieven" data-brief="${r.brief}">Brief klaarmaken</a>`:""}
       ${r.kalender?`<a class="btn btn-ghost btn-small" href="#agenda" data-kal="${r.kalender}">In de agenda</a>`:""}
       ${r.link?`<a class="btn btn-ghost btn-small" href="${r.link.href}" target="_blank" rel="noopener">${esc(r.link.tekst)} ↗</a>`:""}
+      ${r.fiche?`<a class="btn btn-ghost btn-small" href="#fiche">Naar de zorgfiche</a>`:""}
     </div>
     ${trackable && !per.sample ? `<div class="track">
-      <label class="f" for="tr-${r.id}">Waar sta je?<select id="tr-${r.id}" data-track="${r.id}">${(isC?CSTATUSES:STATUSES).map(([v,l]) => `<option value="${v}" ${tr.status===v?"selected":""}>${l}</option>`).join("")}</select></label>
-      <label class="f" for="trb-${r.id}" ${tr.status==="ontvangen"?"":"hidden"}>${isC?"Bespaard per jaar":"Bedrag per jaar"}<span class="euro"><input type="number" min="0" id="trb-${r.id}" data-trackamt="${r.id}" value="${tr.bedrag ?? (r.bedrag?Math.round(r.bedrag):"")}" inputmode="numeric"></span></label>
+      <label class="f" for="tr-${r.id}">Waar sta je?<select id="tr-${r.id}" data-track="${r.id}">${(isT?TSTATUSES:isC?CSTATUSES:STATUSES).map(([v,l]) => `<option value="${v}" ${tr.status===v?"selected":""}>${l}</option>`).join("")}</select></label>
+      <label class="f" for="trb-${r.id}" ${tr.status==="ontvangen" && !isT?"":"hidden"}>${isC?"Bespaard per jaar":"Bedrag per jaar"}<span class="euro"><input type="number" min="0" id="trb-${r.id}" data-trackamt="${r.id}" value="${tr.bedrag ?? (r.bedrag?Math.round(r.bedrag):"")}" inputmode="numeric"></span></label>
     </div>` : ""}
     <p class="src">Bron: <a href="${r.bron.bron}" target="_blank" rel="noopener">${esc(r.bron.bronNaam)}</a> · nagekeken ${NAGEKEKEN}</p>
   </article>`;
@@ -1015,13 +1088,30 @@ function renderBrieven(focus){
 }
 function refreshLetters(){ const d = briefData(); BRIEVEN.forEach(b => { const el = $("txt-"+b.id); if (el) el.textContent = b.tekst(d); }); }
 
+/* ===================== Zorgfiche ===================== */
+const FICHE = [["huisarts","Huisarts"],["ziekenfonds","Ziekenfonds"],["apotheek","Apotheek"],["thuiszorg","Thuisverpleging / gezinszorg"],
+  ["aandoeningen","Aandoeningen"],["medicatie","Medicatie"],["allergie","Allergieën"],["nood","Bellen bij nood"],["praktisch","Praktisch"],["wensen","Afspraken en wensen"]];
+function ficheText(per){
+  const f = per.fiche || {}, a = per.answers, g = per.gegevens || {};
+  const head = `ZORGFICHE – ${g.volnaam || pname(per)}` + (a.leeftijd ? ` (${a.leeftijd} jaar)` : "") + (g.adres ? `\n${g.adres}` : "");
+  const body = FICHE.filter(([k]) => (f[k]||"").trim()).map(([k,l]) => `${l.toUpperCase()}\n${f[k].trim()}`).join("\n\n");
+  return head + "\n\n" + (body || "Nog niets ingevuld.") + `\n\nBijgewerkt op ${new Date().toLocaleDateString("nl-BE")} · via Mantelmap`;
+}
+function renderFiche(){
+  const per = person(); per.fiche = per.fiche || {};
+  switcher("switch4");
+  document.querySelectorAll("[data-fiche]").forEach(el => { if (document.activeElement !== el) el.value = per.fiche[el.dataset.fiche] || ""; });
+  $("fiche-out").textContent = ficheText(per);
+  $("fiche-print").hidden = !!window.claude;
+}
+
 /* ===================== Navigatie ===================== */
-const VIEWS = ["start","check","plan","agenda","brieven","voorjou"];
+const VIEWS = ["start","check","plan","agenda","brieven","voorjou","fiche"];
 function route(){
   const h = location.hash.replace("#","");
   currentView = VIEWS.includes(h) ? h : "start";
   VIEWS.forEach(v => $("v-"+v).hidden = v !== currentView);
-  const tabFor = currentView === "voorjou" ? "start" : currentView;
+  const tabFor = (currentView === "voorjou" || currentView === "fiche") ? "start" : currentView;
   document.querySelectorAll(".tab").forEach(t => { if (t.dataset.v === tabFor) t.setAttribute("aria-current","page"); else t.removeAttribute("aria-current"); });
   setNames();
   if (currentView === "start") renderStart();
@@ -1029,6 +1119,7 @@ function route(){
   if (currentView === "plan") renderPlan();
   if (currentView === "agenda"){ renderAgenda(); updateEvForm(); }
   if (currentView === "brieven"){ renderBrieven(pendingBrief); pendingBrief = null; }
+  if (currentView === "fiche") renderFiche();
   renderBadge();
   if (!pendingScroll) window.scrollTo(0,0);
   pendingScroll = false;
@@ -1059,6 +1150,7 @@ $("form").addEventListener("input", e => {
   $("sample-banner").hidden = true;
 });
 $("form").addEventListener("submit", e => e.preventDefault());
+$("ficheform").addEventListener("submit", e => e.preventDefault());
 
 document.addEventListener("change", e => {
   const id = e.target.dataset.track;
@@ -1068,6 +1160,8 @@ document.addEventListener("input", e => {
   const id = e.target.dataset.trackamt;
   if (id){ const per = person(); const tr = per.track[id] || {status:"ontvangen",bedrag:null}; const v = parseFloat(e.target.value); tr.bedrag = isFinite(v) ? v : null; per.track[id] = tr; saveState();
     const sel = e.target.id; renderPlan(); const again = $(sel); if (again){ again.focus(); try{ const l = again.value.length; again.setSelectionRange(l,l); }catch(_){} } }
+  if (e.target.dataset.fiche){ const per = person(); if (per.sample){ per.sample = false; per.id = uid(); S.active = per.id; }
+    per.fiche = per.fiche || {}; per.fiche[e.target.dataset.fiche] = e.target.value; saveState(); $("fiche-out").textContent = ficheText(per); }
   const map = {"b-pvolnaam":["g","volnaam"],"b-padres":["g","adres"],"b-mijnnaam":["me","naam"],"b-mijncontact":["me","contact"]};
   if (map[e.target.id]){ const [where,k] = map[e.target.id]; if (where === "g"){ const per = person(); per.gegevens = per.gegevens || {}; per.gegevens[k] = e.target.value; } else S.me[k] = e.target.value; saveState(); refreshLetters(); }
 });
@@ -1097,6 +1191,10 @@ document.addEventListener("click", e => {
   if (act === "bk-open"){ $("bk-text").value = ""; $("bk-text").hidden = false; $("bk-restore-actions").hidden = false; $("bk-text").focus(); $("bk-msg").textContent = "Plak de gegevens in het vak en klik op Terugzetten."; }
   if (act === "bk-restore"){ try { const s = JSON.parse($("bk-text").value); if (!s || !Array.isArray(s.people)) throw 0; S = Object.assign(freshState(), s); saveState(); $("bk-text").hidden = true; $("bk-restore-actions").hidden = true; $("bk-msg").textContent = "Gegevens teruggezet."; renderNews(); route(); }
     catch(_){ $("bk-msg").textContent = "Dit zijn geen geldige gegevens. Plak de volledige tekst die je kopieerde."; } }
+  if (act === "fiche-copy"){ const txt = ficheText(person());
+    copyText(txt, () => $("fiche-msg").textContent = "Gekopieerd. Bewaar het in een notitie op je gsm, of stuur het naar je broer of zus.",
+      () => { const r = document.createRange(); r.selectNodeContents($("fiche-out")); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); $("fiche-msg").textContent = "De fiche is geselecteerd. Kopieer ze met je toestel."; }); }
+  if (act === "fiche-print"){ try{ window.print(); }catch(_){} }
   if (act === "news-close") closeNews();
   if (act === "news-check"){ closeNews(); go("check"); }
   if (act === "wipe-open") $("wipe-confirm").hidden = false;

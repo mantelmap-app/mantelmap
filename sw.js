@@ -1,5 +1,5 @@
 // Mantelmap service worker: maakt de app offline bruikbaar. Verhoog VERSION bij elke update.
-const VERSION = "mantelmap-2026-10-31b";
+const VERSION = "mantelmap-2026-11-16";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {
