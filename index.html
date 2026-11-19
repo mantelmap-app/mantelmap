@@ -280,7 +280,7 @@ details.more ul{margin:8px 0 0;padding-left:1.2em}
       <div class="cal" id="start-next"></div>
     </div>
 
-    <p class="fine">🔒 Mantelmap werkt zonder account. Alles wat je invult blijft op dit toestel en wordt nergens naartoe gestuurd. Mantelmap geeft een inschatting, geen beslissing: de officiële instantie beslist altijd.</p>
+    <p class="fine">🔒 Mantelmap werkt zonder account. Alles wat je invult blijft op dit toestel en wordt nergens naartoe gestuurd. We tellen alleen anoniem hoeveel bezoekers de site heeft, zonder cookies. Mantelmap geeft een inschatting, geen beslissing: de officiële instantie beslist altijd.</p>
   </section>
 
   <!-- ================= CHECK ================= -->
@@ -566,6 +566,7 @@ details.more ul{margin:8px 0 0;padding-left:1.2em}
       <div class="card">
         <h4>Over Mantelmap</h4>
         <p class="why">Mantelmap is een gratis, onafhankelijk initiatief om mantelzorgers te helpen. Het is niet verbonden aan de overheid, een ziekenfonds of een bank. Mantelmap geeft een inschatting: de officiële instantie beslist altijd.</p>
+        <p class="why"><strong>Privacy:</strong> wat je invult, blijft op dit toestel. Om te weten hoeveel mensen Mantelmap gebruiken, tellen we bezoeken met Cloudflare Web Analytics. Dat gebeurt anoniem, zonder cookies, en zonder ooit te zien wat je invult.</p>
         <p class="why">Iets onduidelijk, een fout gezien, of een idee? Mail naar <a class="mail" href="mailto:info@mantelmap.be">info@mantelmap.be</a>. Elke reactie maakt Mantelmap beter.</p>
         <p class="why"><strong>Voor werkgevers en organisaties:</strong> wil je Mantelmap aanbieden aan je medewerkers of leden, in je eigen huisstijl? Mail naar hetzelfde adres.</p>
       </div>
@@ -1244,5 +1245,7 @@ loadState();
 renderNews();
 route();
 </script>
-
+<!-- Cloudflare Web Analytics: anoniem, zonder cookies -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1f5b22337028437980f2f0030c0fc1b6"}'></script>
+<!-- End Cloudflare Web Analytics -->
 </html>
